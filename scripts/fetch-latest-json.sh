@@ -1,30 +1,29 @@
 #!/bin/bash
 
-if [ "$#" -ne "4" ] ; then
-  echo "$0 \"\$TIMESTAMP\" \"\$DOMAIN\" \"\$FILE\" \"\$SLUG\""
+if [ "$#" != "1" ] && [ "$#" != "2" ] ; then
+  echo "$0 url [certificate pin location]"
   exit
 fi
 
-TIMESTAMP="$1"
-DOMAIN="$3"
-FILE="$2"
-SLUG="$4"
+URL="$1"
+DOMAIN=`getdomain "${URL}"`
+SLUG=`slugify "${URL}"`
 
-CERTPIN="certs/${DOMAIN}-latest"
+CERTPIN="$2"
 
-OUTDIR="json"
-mkdir -p "$OUTDIR"
-OUT="$OUTDIR/$SLUG-$TIMESTAMP.json"
+mkdir -p "${OUTDIR}${DOMAIN}"
+JSON_OUT="${OUTDIR}${DOMAIN}/${SLUG}-${TIMESTAMP}.json"
+JSON_LAST="${OUTDIR}${SLUG}-latest.json"
 
-if [ -f "$CERTPIN" ] ; then
-  echo "Using certificate pin at $CERTPIN"
-  curl --pinnedpubkey "sha256//$(cat $CERTPIN)" "$FILE" |\
-    jq > "$OUT"
+if [ -f "${CERTPIN}" ] ; then
+  echo "Using certificate pin at ${CERTPIN}"
+  curl --pinnedpubkey "sha256//$(cat ${CERTPIN})" "${URL}" |\
+    jq > "${JSON_OUT}"
 else
   echo "No certificate pin found - trusting OS CA Certs"
-  curl "$FILE" |\
-    jq > "$OUT"
+  curl "${URL}" |\
+    jq > "${JSON_OUT}"
 fi
 
-cp "$OUT" "$OUTDIR/$SLUG-latest.json"
+cp "${JSON_OUT}" "${JSON_LAST}"
 
