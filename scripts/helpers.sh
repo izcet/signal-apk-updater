@@ -12,6 +12,7 @@ function getdomain {
 
 function slugify {
   # sanitize links to "https___updates.signal.org_android_latest.json"
+  # shellcheck disable=SC2001
   echo "$1" | sed 's-[:/?()]-_-g'
 }
 

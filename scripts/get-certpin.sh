@@ -27,6 +27,7 @@ echo |\
   -connect "${DOMAIN}":443 \
   2>/dev/null > "${CERT_RAW}"
 
+# shellcheck disable=SC2002
 cat "${CERT_RAW}" |\
   openssl x509 \
   -inform pem \
@@ -34,8 +35,8 @@ cat "${CERT_RAW}" |\
   -text > "${CERT_TEXT}"
 
 # curl uses a very specific way to pin on certificates
-# specific here is a synonym for bizarre
 # https://blog.heckel.io/2020/12/13/calculating-public-key-hashes-for-public-key-pinning-in-curl/
+# shellcheck disable=SC2002
 cat "${CERT_RAW}" |\
   openssl x509 \
     -pubkey \
@@ -55,7 +56,7 @@ if [[ ! -f "${PIN_LAST}" ]] ; then
   echo "Creating a pin on the certificate stored here:"
   echo "  ${CERT_TEXT}"
   echo "Press enter to continue or Ctrl+C to cancel."
-  read -p ""
+  read -pr ""
   cat "${PIN_CERT}" > "${PIN_LAST}"
 elif ! diff -q "${PIN_CERT}" "${PIN_LAST}" ; then
   echo "THE CERTIFICATE HAS CHANGED!!"

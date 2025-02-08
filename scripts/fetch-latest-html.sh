@@ -4,8 +4,7 @@ function extractsignerinfo {
   # signal.org conveniently put their signer info in the html
   # in a more easily globbable part of the text
   local FILE="$1"
-  cat "${FILE}" |\
-    grep -i '^[A-F0-9:]*$' |\
+  grep -i '^[A-F0-9:]*$' "${FILE}" |\
     tr -d '\n' |\
     tr -d ':'
 }
@@ -17,8 +16,8 @@ if [ "$#" != "1" ] && [ "$#" != "2" ] ; then
 fi
 
 URL="$1"
-DOMAIN=`getdomain "${URL}"`
-SLUG=`slugify "${URL}"`
+DOMAIN="$(getdomain "${URL}")"
+SLUG="$(slugify "${URL}")"
 
 CERTPIN="$2"
 
@@ -42,8 +41,8 @@ else
     "${URL}" 
 fi
 
-SIGN_OUT=`extractsignerinfo "${HTML_OUT}"`
-SIGN_LAST=`extractsignerinfo "${HTML_LAST}"`
+SIGN_OUT="$(extractsignerinfo "${HTML_OUT}")"
+SIGN_LAST="$(extractsignerinfo "${HTML_LAST}")"
 DIFF="$(diff -qi <(echo "${SIGN_OUT}") <(echo "${SIGN_LAST}") 2>/dev/null)"
 
 if [ ! -f "${HTML_LAST}" ] ; then
@@ -58,7 +57,7 @@ elif [ "$DIFF" ] ; then
   echo "  ${SIGN_OUT}"
   echo ""
   echo "Press Ctrl-C to cancel or Enter to trust the new key:"
-  read -p ""
+  read -pr ""
 fi
 
 cp "${HTML_OUT}" "${HTML_LAST}"
