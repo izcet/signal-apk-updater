@@ -27,7 +27,7 @@ if [ -f "${LAST_FILE}" ] ; then
   LAST_SHA=`sha256 "${LAST_FILE}"`
   DIFF="$(diff -qi <(echo "${LAST_SHA}") <(echo "${APK_SHA}") 2>/dev/null)"
   if [ ! "$DIFF" ] ; then
-    echo "The APK has not been updated since the last download."
+    echo "A newer APK has not been released since the last one downloaded."
   else
     FETCH_LATEST=1
   fi
@@ -44,12 +44,45 @@ if [ "${FETCH_LATEST}" -eq "1" ] ; then
     echo "THE DOWNLOADED APK DOES NOT MATCH THE CHECKSUM!!!"
     exit 1
   fi
-  
-  echo "todo: verify signature with apktool"
-  if false ; then
-    echo "todo: verify signature with apktool"
-    echo "THE DOWNLOADED APK DOES NOT MATCH THE SIGNING KEY!!!"
-    exit 1
+ 
+  if [ ! "$(which apksigner)" ] ; then
+    echo "UNABLE TO VERIFY THE SIGNING KEY!!!"
+    echo "To fix this issue, make sure apksigner is on your \$PATH."
+    echo "To continue anyway, press Enter, or Ctrl+C to cancel."
+    read -p ""
+    echo "VERIFICATION SKIPPED!!!"
+  else
+    apksigner verify \
+      -v \
+      --print-certs \
+      --min-sdk-version 24 \
+      "${OUT_FILE}" \
+      2>&1 \
+      > "${OUT_FILE}.crt"
+    
+    VERIFIES="$?"
+    if [ ! "$VERIFIES" ] ; then
+      echo "APKSIGNER VERIFICATION FAILED!!!"
+      echo "Check the output logged in:"
+      echo "  ${OUT_FILE}.crt"
+      exit 1
+    fi
+
+    REGEX="^Signer \(minSdkVersion=[0-9]+, maxSdkVersion=[0-9]+\) certificate SHA-256 digest: [0-9a-f]+$"
+    MATCH=`cat "${OUT_FILE}.crt" |\
+      grep -E "${REGEX}" |\
+      grep -i "${SIGN_KEY}"`
+
+    if [ ! "${MATCH}" ] ; then
+      echo "APK SIGNATURE MISSING!!!"
+      echo -e "Expected signer:\n  ${SIGN_KEY}"
+      echo "Actual signers:"
+      cat "${OUT_FILE}.crt" | grep -E "${REGEX}"
+      exit 1
+    else
+      echo "Signature verified!"
+      echo -e "Using signing key:\n  ${SIGN_KEY}"
+    fi
   fi
 
   cp "${OUT_FILE}" "${LAST_FILE}"

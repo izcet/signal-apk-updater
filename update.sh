@@ -48,4 +48,12 @@ OUTDIR="${DIR_APK}" \
   "${SIGN_KEY}" \
   || exit
 
-echo todo adb install -r
+echo "All checks passed and ready to install."
+echo ""
+echo "  adb install -r apks/latest.apk"
+echo ""
+echo "Press Enter when ready, or Ctrl+C to cancel."
+echo
+read -p ""
+adb install -r apks/latest.apk
+
